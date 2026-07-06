@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bachat — Compare prices across Amazon, Flipkart, Meesho and Myntra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+/* ================================
+   AFFILIATE CONFIG — edit this only
+   ================================ */
+</style>
+<script>
+// ============================================================
+// BACKEND CONFIG — left blank on purpose. Since this file is served
+// by the same backend (see server.js), API calls just use the same
+// origin automatically. No URL to edit, no mismatch possible.
+// ============================================================
+const API_BASE = "";
+
+// ============================================================
+// AFFILIATE CONFIG — put your real IDs/tags here.
+// Every "Buy now" button on the site builds its link from this.
+// ============================================================
+const AFFILIATE = {
+  amazon:  { param: "tag",       id: "yourtag-21" },     // Amazon Associates tag
+  flipkart:{ param: "affid",     id: "yourflipkartid" }, // Flipkart Affiliate id
+  meesho:  { param: "utm_source",id: "yourmeeshoid" },   // via EarnKaro/Cuelinks etc
+  myntra:  { param: "utm_source",id: "yourmyntraid" }    // via EarnKaro/Cuelinks etc
+};
+
+// Builds an affiliate-tagged link. If you're using a network like
+// EarnKaro/Cuelinks, replace this with the deep-link format they give you.
+function affiliateLink(platform, baseUrl){
+  const cfg = AFFILIATE[platform];
+  if(!cfg) return baseUrl;
+  const url = new URL(baseUrl);
+  url.searchParams.set(cfg.param, cfg.id);
+  return url.toString();
+}
+</script>
+<style>
+  :root{
+    --ink:#14172B;
+    --ink-2:#1B1F3B;
+    --card:#20244A;
+    --line:rgba(245,243,236,0.10);
+    --paper:#F5F3EC;
+    --paper-dim:#B9BBD4;
+    --marigold:#FFB238;
+    --marigold-dim:#8A6524;
+    --teal:#2FD9C4;
+    --teal-dim:#0F6F62;
+    --coral:#FF6B57;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Manrope', sans-serif;
+    line-height:1.6;
+  }
+  h1,h2,h3{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    margin:0;
+    color:var(--paper);
+  }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+  a{ color:inherit; }
+  .wrap{ max-width:1120px; margin:0 auto; padding:0 24px; }
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(20,23,43,0.86);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  nav .wrap{ display:flex; align-items:center; justify-content:space-between; padding:16px 24px; }
+  .brand{ display:flex; align-items:center; gap:10px; font-family:'Fraunces', serif; font-size:22px; font-weight:700; }
+  .brand-mark{
+    width:30px; height:30px; border-radius:8px;
+    background:linear-gradient(135deg, var(--marigold), var(--teal));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces', serif; font-weight:700; color:var(--ink); font-size:15px;
+  }
+  .nav-links{ display:flex; gap:32px; font-size:14px; color:var(--paper-dim); }
+  .nav-links a{ text-decoration:none; }
+  .nav-links a:hover{ color:var(--paper); }
+  @media (max-width:720px){ .nav-links{ display:none; } }
+
+  /* ---------- HERO ---------- */
+  .hero{ padding:72px 0 56px; border-bottom:1px solid var(--line); }
+  .hero-grid{ display:grid; grid-template-columns:1.1fr 1fr; gap:56px; align-items:center; }
+  @media (max-width:900px){ .hero-grid{ grid-template-columns:1fr; } }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:12.5px; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--marigold); font-weight:700; margin-bottom:18px;
+  }
+  .eyebrow::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--marigold); }
+  .hero h1{ font-size:46px; line-height:1.12; letter-spacing:-0.01em; }
+  .hero h1 em{ font-style:italic; color:var(--teal); }
+  .hero p.sub{ margin-top:20px; font-size:17px; color:var(--paper-dim); max-width:46ch; }
+
+  .search-box{
+    margin-top:32px; display:flex; gap:10px; padding:8px;
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+  }
+  .search-box input{
+    flex:1; border:none; outline:none; background:transparent; color:var(--paper);
+    font-family:'Manrope'; font-size:15px; padding:12px 14px;
+  }
+  .search-box input::placeholder{ color:var(--paper-dim); }
+  .search-box button{
+    border:none; cursor:pointer; padding:12px 22px; border-radius:10px;
+    background:var(--marigold); color:#241B05; font-weight:700; font-size:14.5px;
+    font-family:'Manrope';
+  }
+  .search-box button:hover{ filter:brightness(1.06); }
+  .search-hint{ margin-top:10px; font-size:12.5px; color:var(--paper-dim); }
+
+  /* ---------- PRICE RACE (signature element) ---------- */
+  .race-card{
+    background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:24px;
+  }
+  .race-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:18px; }
+  .race-head h3{ font-size:15px; font-weight:600; color:var(--paper); }
+  .race-head span{ font-size:12px; color:var(--paper-dim); }
+  .race-row{ display:grid; grid-template-columns:36px 84px 1fr 74px; align-items:center; gap:12px; margin-bottom:14px; }
+  .race-row .platform{ font-size:13px; font-weight:600; color:var(--paper-dim); }
+  .row-thumb{
+    width:36px; height:36px; border-radius:8px; object-fit:cover;
+    background:rgba(245,243,236,0.06); border:1px solid var(--line);
+  }
+  .row-thumb.placeholder{
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+  }
+  .race-track{ height:26px; background:rgba(245,243,236,0.06); border-radius:7px; overflow:hidden; }
+  .race-fill{ height:100%; border-radius:7px; width:0%; transition:width 1.1s cubic-bezier(.2,.8,.2,1); background:var(--paper-dim); opacity:0.55; }
+  .race-row.winner .platform{ color:var(--teal); }
+  .race-row.winner .race-fill{ background:var(--teal); opacity:1; }
+  .race-row .price{ text-align:right; font-size:14px; font-weight:600; }
+  .race-row.winner .price{ color:var(--teal); }
+  .race-badge{
+    margin-top:6px; display:inline-flex; align-items:center; gap:6px;
+    background:rgba(47,217,196,0.12); color:var(--teal); border:1px solid rgba(47,217,196,0.3);
+    padding:5px 11px; border-radius:100px; font-size:12px; font-weight:700;
+  }
+
+  /* ---------- SECTION HEAD ---------- */
+  .section{ padding:64px 0; border-bottom:1px solid var(--line); }
+  .section-head{ max-width:56ch; margin-bottom:40px; }
+  .section-head .eyebrow{ margin-bottom:12px; }
+  .section-head h2{ font-size:30px; }
+  .section-head p{ margin-top:12px; color:var(--paper-dim); font-size:15.5px; }
+
+  /* ---------- HOW IT WORKS ---------- */
+  .steps{ display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+  @media (max-width:820px){ .steps{ grid-template-columns:1fr; } }
+  .step{ padding:26px; background:var(--card); border:1px solid var(--line); border-radius:16px; }
+  .step .num{ font-family:'JetBrains Mono'; font-size:13px; color:var(--marigold); margin-bottom:14px; }
+  .step h3{ font-size:18px; margin-bottom:8px; }
+  .step p{ font-size:14.5px; color:var(--paper-dim); margin:0; }
+
+  /* ---------- DEMO RESULTS ---------- */
+  #results{ display:none; }
+  #results.show{ display:block; }
+  .result-note{
+    font-size:13px; color:var(--marigold); background:rgba(255,178,56,0.08);
+    border:1px solid rgba(255,178,56,0.25); padding:10px 14px; border-radius:10px; margin-bottom:22px;
+  }
+
+  /* ---------- DEALS GRID ---------- */
+  .deals-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:20px; }
+  .deal-card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .deal-thumb{
+    width:100%; aspect-ratio:1.4/1; border-radius:12px; object-fit:cover;
+    background:rgba(245,243,236,0.06); border:1px solid var(--line);
+  }
+  .deal-thumb.placeholder{
+    display:flex; align-items:center; justify-content:center; font-size:36px;
+  }
+  .deal-top{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .platform-pill{
+    font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:100px;
+    letter-spacing:0.02em;
+  }
+  .pill-amazon{ background:rgba(255,178,56,0.15); color:var(--marigold); }
+  .pill-flipkart{ background:rgba(76,140,255,0.15); color:#7CA8FF; }
+  .pill-meesho{ background:rgba(255,60,150,0.15); color:#FF7FBF; }
+  .pill-myntra{ background:rgba(255,107,87,0.15); color:var(--coral); }
+  .discount{ font-size:12px; color:var(--teal); font-weight:700; }
+  .deal-card h3{ font-size:16px; font-weight:600; line-height:1.35; }
+  .price-row{ display:flex; align-items:baseline; gap:10px; }
+  .price-row .now{ font-family:'JetBrains Mono'; font-size:20px; font-weight:600; color:var(--paper); }
+  .price-row .was{ font-family:'JetBrains Mono'; font-size:13px; color:var(--paper-dim); text-decoration:line-through; }
+  .buy-btn{
+    margin-top:auto; text-align:center; text-decoration:none; padding:11px; border-radius:10px;
+    background:transparent; border:1px solid var(--line); color:var(--paper); font-weight:600; font-size:14px;
+    transition:background 0.15s, border-color 0.15s;
+  }
+  .buy-btn:hover{ background:rgba(245,243,236,0.06); border-color:var(--paper-dim); }
+
+  /* ---------- FOOTER ---------- */
+  footer{ padding:40px 0 60px; }
+  footer .wrap{ display:flex; flex-direction:column; gap:14px; }
+  .disclosure{
+    font-size:13px; color:var(--paper-dim); background:var(--card);
+    border:1px solid var(--line); border-radius:12px; padding:16px 18px;
+  }
+  .foot-bottom{ display:flex; justify-content:space-between; font-size:12.5px; color:var(--paper-dim); flex-wrap:wrap; gap:8px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="brand"><span class="brand-mark">B</span>Bachat</div>
+    <div class="nav-links">
+      <a href="#compare">Compare</a>
+      <a href="#deals">Today's deals</a>
+      <a href="#how">How it works</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Four stores, one search</div>
+      <h1>Find out who's <em>actually</em><br>cheapest before you buy.</h1>
+      <p class="sub">Paste a product link from Amazon, Flipkart, Meesho or Myntra. Bachat checks the others and tells you where it costs less.</p>
+
+      <div class="search-box" id="compare">
+        <input type="text" id="linkInput" placeholder="Paste a product link, e.g. https://www.amazon.in/dp/..." />
+        <button onclick="runCompare()">Compare prices</button>
+      </div>
+      <div class="search-hint">Try it — pasting any link shows a sample comparison below.</div>
+    </div>
+
+    <div class="race-card">
+      <div class="race-head">
+        <h3>boAt Rockerz 255 Pro+ earbuds</h3>
+        <span>sample comparison</span>
+      </div>
+      <div class="race-row" data-price="1499">
+        <div class="row-thumb placeholder" style="background:rgba(255,178,56,0.15);">🎧</div>
+        <div class="platform">Amazon</div>
+        <div class="race-track"><div class="race-fill"></div></div>
+        <div class="price mono">₹1,499</div>
+      </div>
+      <div class="race-row winner" data-price="1249">
+        <div class="row-thumb placeholder" style="background:rgba(76,140,255,0.15);">🎧</div>
+        <div class="platform">Flipkart</div>
+        <div class="race-track"><div class="race-fill"></div></div>
+        <div class="price mono">₹1,249</div>
+      </div>
+      <div class="race-row" data-price="1599">
+        <div class="row-thumb placeholder" style="background:rgba(255,60,150,0.15);">🎧</div>
+        <div class="platform">Meesho</div>
+        <div class="race-track"><div class="race-fill"></div></div>
+        <div class="price mono">₹1,599</div>
+      </div>
+      <div class="race-row" data-price="1799">
+        <div class="row-thumb placeholder" style="background:rgba(255,107,87,0.15);">🎧</div>
+        <div class="platform">Myntra</div>
+        <div class="race-track"><div class="race-fill"></div></div>
+        <div class="price mono">₹1,799</div>
+      </div>
+      <div class="race-badge">Flipkart wins — ₹250 cheaper than Amazon</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">How it works</div>
+      <h2>Three steps to the best price</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="num mono">01</div>
+        <h3>Paste your link</h3>
+        <p>Copy a product URL from any of the four stores and drop it in the search box above.</p>
+      </div>
+      <div class="step">
+        <div class="num mono">02</div>
+        <h3>We check the rest</h3>
+        <p>Bachat looks up the same product across the other platforms and lines up the prices.</p>
+      </div>
+      <div class="step">
+        <div class="num mono">03</div>
+        <h3>Buy where it's cheapest</h3>
+        <p>Tap through to the lowest price. Same product, less money, one tap.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="results-section">
+  <div class="wrap">
+    <div id="results">
+      <div class="result-note">Showing sample data for this demo. Connect a live product API (see notes below) to pull real-time prices.</div>
+      <div class="race-card" id="resultCard"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="deals">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Today's deals</div>
+      <h2>Handpicked deals across all four stores</h2>
+      <p>Every "Buy now" link below carries an affiliate tag — replace the sample IDs in the code with your real ones and these start earning.</p>
+    </div>
+    <div class="deals-grid" id="dealsGrid"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="disclosure">
+      Bachat is a participant in the Amazon Associates Program, the Flipkart Affiliate Program, and similar affiliate programs for Meesho and Myntra. As an affiliate, we may earn a commission on qualifying purchases made through links on this site — at no extra cost to you.
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Bachat</span>
+      <span>Prices shown may change on the retailer's site.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ---------------- Price race bar animation on load ----------------
+function animateRace(card){
+  const rows = card.querySelectorAll('.race-row');
+  const prices = Array.from(rows).map(r => parseFloat(r.dataset.price));
+  const max = Math.max(...prices);
+  rows.forEach(row => {
+    const price = parseFloat(row.dataset.price);
+    const fill = row.querySelector('.race-fill');
+    const pct = 20 + (price / max) * 70;
+    requestAnimationFrame(() => { fill.style.width = pct + '%'; });
+  });
+}
+document.querySelectorAll('.race-card').forEach(card => {
+  if(card.querySelector('.race-row')) setTimeout(() => animateRace(card), 200);
+});
+
+// ---------------- Shared: platform names, colors, image placeholders ----------------
+const platformNames = { amazon:"Amazon", flipkart:"Flipkart", meesho:"Meesho", myntra:"Myntra" };
+const PILL_LABEL = platformNames;
+const PLATFORM_BG = {
+  amazon:"rgba(255,178,56,0.15)", flipkart:"rgba(76,140,255,0.15)",
+  meesho:"rgba(255,60,150,0.15)", myntra:"rgba(255,107,87,0.15)"
+};
+
+// Picks a simple emoji icon based on the product name, used only as a
+// placeholder when no real product image is available yet.
+function categoryEmoji(name){
+  const n = (name || "").toLowerCase();
+  if(/earbud|headphone|speaker|airdopes/.test(n)) return "🎧";
+  if(/watch|band/.test(n)) return "⌚";
+  if(/shoe|sneaker/.test(n)) return "👟";
+  if(/kurti|jeans|shirt|dress|jacket/.test(n)) return "👕";
+  if(/bottle|steel|cooktop|microwave|fryer|induction/.test(n)) return "🍳";
+  if(/phone|mobile/.test(n)) return "📱";
+  return "🛍️";
+}
+
+// Replaces a broken <img> with an emoji placeholder of the same size/class.
+function handleImgError(img, emoji, bg){
+  const div = document.createElement('div');
+  div.className = img.className + ' placeholder';
+  div.style.background = bg;
+  div.textContent = emoji;
+  img.replaceWith(div);
+}
+
+// Returns HTML for either a real product image or a placeholder, in the
+// given size class ('row-thumb' for compare rows, 'deal-thumb' for cards).
+function thumbHtml(image, name, platform, sizeClass){
+  const bg = PLATFORM_BG[platform] || "rgba(245,243,236,0.08)";
+  const emoji = categoryEmoji(name);
+  if(image){
+    return `<img class="${sizeClass}" src="${image}" alt="${name}" loading="lazy"
+             onerror="handleImgError(this,'${emoji}','${bg}')">`;
+  }
+  return `<div class="${sizeClass} placeholder" style="background:${bg}">${emoji}</div>`;
+}
+
+// ---------------- Demo "compare" search (used only if the backend is unreachable) ----------------
+const SAMPLE_PRODUCTS = [
+  { name: "Noise ColorFit Pulse 2 smartwatch", data: {
+      amazon:{price:1799,url:"https://www.amazon.in/s?k=noise+colorfit+pulse+2",image:null},
+      flipkart:{price:1699,url:"https://www.flipkart.com/search?q=noise+colorfit+pulse+2",image:null},
+      meesho:{price:1899,url:"https://www.meesho.com/search?q=noise+colorfit+pulse+2",image:null},
+      myntra:{price:2099,url:"https://www.myntra.com/smart-watches?q=noise+colorfit+pulse+2",image:null} } },
+  { name: "Philips Air Fryer HD9200", data: {
+      amazon:{price:5999,url:"https://www.amazon.in/s?k=philips+air+fryer+hd9200",image:null},
+      flipkart:{price:5799,url:"https://www.flipkart.com/search?q=philips+air+fryer+hd9200",image:null},
+      meesho:{price:6299,url:"https://www.meesho.com/search?q=philips+air+fryer",image:null},
+      myntra:{price:6499,url:"https://www.myntra.com/search?q=philips+air+fryer",image:null} } },
+  { name: "Levi's 511 slim fit jeans", data: {
+      amazon:{price:1899,url:"https://www.amazon.in/s?k=levis+511+slim+fit+jeans",image:null},
+      flipkart:{price:1999,url:"https://www.flipkart.com/search?q=levis+511+slim+fit+jeans",image:null},
+      meesho:{price:1499,url:"https://www.meesho.com/search?q=levis+511+jeans",image:null},
+      myntra:{price:1799,url:"https://www.myntra.com/jeans?q=levis+511",image:null} } },
+  { name: "Milton thermosteel bottle 1L", data: {
+      amazon:{price:649,url:"https://www.amazon.in/s?k=milton+thermosteel+bottle+1l",image:null},
+      flipkart:{price:599,url:"https://www.flipkart.com/search?q=milton+thermosteel+bottle+1l",image:null},
+      meesho:{price:549,url:"https://www.meesho.com/search?q=milton+thermosteel+bottle",image:null},
+      myntra:{price:699,url:"https://www.myntra.com/search?q=milton+thermosteel+bottle",image:null} } }
+];
+
+// resultsData shape: { amazon: {price, url, image}, flipkart: {...}, ... }
+// Every link rendered here is passed through affiliateLink() before being
+// used as an href - that's what makes clicks earn commission.
+function renderComparison(productName, resultsData, isLive){
+  const entries = Object.entries(resultsData);
+  const cheapest = entries.reduce((a,b) => a[1].price < b[1].price ? a : b);
+
+  let rowsHtml = "";
+  entries.forEach(([platform, info]) => {
+    const isWinner = platform === cheapest[0];
+    rowsHtml += `
+      <div class="race-row ${isWinner ? 'winner' : ''}" data-price="${info.price}">
+        ${thumbHtml(info.image, productName, platform, 'row-thumb')}
+        <div class="platform">${platformNames[platform]}</div>
+        <div class="race-track"><div class="race-fill"></div></div>
+        <div class="price mono">₹${info.price.toLocaleString('en-IN')}</div>
+      </div>`;
+  });
+
+  const savings = Math.max(...entries.map(([,i]) => i.price)) - cheapest[1].price;
+  const winnerUrl = cheapest[1].url
+    || ('https://www.google.com/search?q=' + encodeURIComponent(productName + ' ' + platformNames[cheapest[0]]));
+
+  // affiliateLink() wraps this with your Amazon/Flipkart/Meesho/Myntra
+  // affiliate ID from the AFFILIATE config at the top of this file.
+  const affiliateHref = affiliateLink(cheapest[0], winnerUrl);
+
+  document.getElementById('resultCard').innerHTML = `
+    <div class="race-head">
+      <h3>${productName}</h3>
+      <span>${isLive ? 'live from backend' : 'sample data'}</span>
+    </div>
+    ${rowsHtml}
+    <a class="race-badge" style="text-decoration:none; cursor:pointer;"
+       href="${affiliateHref}"
+       target="_blank" rel="nofollow sponsored noopener">
+      ${platformNames[cheapest[0]]} wins — save ₹${savings.toLocaleString('en-IN')} · Buy now
+    </a>
+  `;
+
+  const resultsEl = document.getElementById('results');
+  const note = resultsEl.querySelector('.result-note');
+  note.textContent = isLive
+    ? "Live prices from your backend. The \"Buy now\" link above carries your affiliate tag."
+    : "Backend not reachable — showing sample data. Start the backend (see backend/README.md) to go live.";
+  resultsEl.classList.add('show');
+  animateRace(document.getElementById('resultCard'));
+  document.getElementById('results-section').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function guessSearchTerm(input){
+  if(!input) return "";
+  try{
+    const url = new URL(input);
+    const slug = url.pathname.split('/').filter(Boolean).pop() || "";
+    return slug.replace(/[-_]/g, ' ');
+  }catch{
+    return input;
+  }
+}
+
+async function runCompare(){
+  const input = document.getElementById('linkInput').value.trim();
+  const searchTerm = guessSearchTerm(input);
+
+  if(searchTerm){
+    try{
+      const resp = await fetch(`${API_BASE}/api/compare?q=${encodeURIComponent(searchTerm)}`, { signal: AbortSignal.timeout(5000) });
+      if(resp.ok){
+        const data = await resp.json();
+        if(data.results && Object.keys(data.results).length){
+          renderComparison(data.product, data.results, true);
+          return;
+        }
+      }
+    }catch(err){
+      console.warn("Backend unreachable, falling back to sample data:", err.message);
+    }
+  }
+
+  const product = SAMPLE_PRODUCTS[Math.floor(Math.random() * SAMPLE_PRODUCTS.length)];
+  renderComparison(product.name, product.data, false);
+}
+
+// ---------------- Deals grid (affiliate cards, used only if backend is unreachable) ----------------
+const DEALS = [
+  { platform:"amazon",   name:"Mi Smart Band 9", now:1999, was:2499, url:"https://www.amazon.in/s?k=mi+smart+band+9", image:null },
+  { platform:"flipkart", name:"boAt Airdopes 141", now:899,  was:1999, url:"https://www.flipkart.com/search?q=boat+airdopes+141", image:null },
+  { platform:"meesho",   name:"Women's cotton kurti set", now:449, was:999, url:"https://www.meesho.com/search?q=cotton+kurti+set", image:null },
+  { platform:"myntra",   name:"Puma running shoes", now:2299, was:3499, url:"https://www.myntra.com/shoes?q=puma+running", image:null },
+  { platform:"amazon",   name:"Prestige induction cooktop", now:1899, was:2650, url:"https://www.amazon.in/s?k=prestige+induction+cooktop", image:null },
+  { platform:"flipkart", name:"Samsung 25L microwave", now:8999, was:11999, url:"https://www.flipkart.com/search?q=samsung+25l+microwave", image:null }
+];
+
+// Every card's "Buy now" href goes through affiliateLink() - this is what
+// earns you commission when someone clicks through and buys.
+function dealCardHtml(platform, name, now, was, url, image){
+  const off = was && was > now ? Math.round((1 - now/was) * 100) : 0;
+  const link = affiliateLink(platform, url);
+  return `
+    <div class="deal-card">
+      ${thumbHtml(image, name, platform, 'deal-thumb')}
+      <div class="deal-top">
+        <span class="platform-pill pill-${platform}">${PILL_LABEL[platform]}</span>
+        ${off ? `<span class="discount">${off}% off</span>` : ''}
+      </div>
+      <h3>${name}</h3>
+      <div class="price-row">
+        <span class="now mono">₹${now.toLocaleString('en-IN')}</span>
+        ${was ? `<span class="was mono">₹${was.toLocaleString('en-IN')}</span>` : ''}
+      </div>
+      <a class="buy-btn" href="${link}" target="_blank" rel="nofollow sponsored noopener">Buy now →</a>
+    </div>`;
+}
+
+async function renderDeals(){
+  const grid = document.getElementById('dealsGrid');
+
+  try{
+    const resp = await fetch(`${API_BASE}/api/deals`, { signal: AbortSignal.timeout(5000) });
+    if(resp.ok){
+      const data = await resp.json();
+      const cards = [];
+      (data.deals || []).forEach(product => {
+        (product.entries || []).forEach(entry => {
+          cards.push(dealCardHtml(entry.platform, product.name, entry.price, entry.mrp || null, entry.url, entry.image));
+        });
+      });
+      if(cards.length){
+        grid.innerHTML = cards.join('');
+        return;
+      }
+    }
+  }catch(err){
+    console.warn("Backend unreachable, showing sample deals:", err.message);
+  }
+
+  grid.innerHTML = DEALS.map(d => dealCardHtml(d.platform, d.name, d.now, d.was, d.url, d.image)).join('');
+}
+renderDeals();
+
+document.getElementById('linkInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter') runCompare();
+});
+</script>
+
+</body>
+</html>
