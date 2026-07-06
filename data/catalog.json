@@ -1,0 +1,37 @@
+{
+  "_comment": "Manually maintained products for platforms without a public price API (Meesho, Myntra) and fallback entries for Amazon/Flipkart if their APIs are unreachable. Match products across platforms using the same 'group' id. The 'image' field: paste the product image URL shown on the product page itself, or the image your affiliate network (EarnKaro/Cuelinks) gives you alongside the deep link - both are meant for this use. Leave 'image' as null if you don't have one yet; the frontend will show a placeholder.",
+  "products": [
+    {
+      "group": "earbuds-boat-rockerz-255",
+      "name": "boAt Rockerz 255 Pro+ earbuds",
+      "entries": [
+        { "platform": "meesho", "price": 1599, "url": "https://www.meesho.com/search?q=boat+rockerz+255+pro", "image": null },
+        { "platform": "myntra", "price": 1799, "url": "https://www.myntra.com/headphones?q=boat+rockerz+255+pro", "image": null }
+      ]
+    },
+    {
+      "group": "smartwatch-noise-pulse-2",
+      "name": "Noise ColorFit Pulse 2 smartwatch",
+      "entries": [
+        { "platform": "meesho", "price": 1899, "url": "https://www.meesho.com/search?q=noise+colorfit+pulse+2", "image": null },
+        { "platform": "myntra", "price": 2099, "url": "https://www.myntra.com/smart-watches?q=noise+colorfit+pulse+2", "image": null }
+      ]
+    },
+    {
+      "group": "kurti-set-cotton",
+      "name": "Women's cotton kurti set",
+      "entries": [
+        { "platform": "meesho", "price": 449, "url": "https://www.meesho.com/search?q=cotton+kurti+set", "image": null },
+        { "platform": "myntra", "price": 899, "url": "https://www.myntra.com/kurtis?q=cotton+kurti+set", "image": null }
+      ]
+    },
+    {
+      "group": "shoes-puma-running",
+      "name": "Puma running shoes",
+      "entries": [
+        { "platform": "meesho", "price": 1999, "url": "https://www.meesho.com/search?q=puma+running+shoes", "image": null },
+        { "platform": "myntra", "price": 2299, "url": "https://www.myntra.com/shoes?q=puma+running", "image": null }
+      ]
+    }
+  ]
+}
