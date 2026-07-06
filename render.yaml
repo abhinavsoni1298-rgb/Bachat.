@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: bachat
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: AMAZON_ACCESS_KEY
+        sync: false
+      - key: AMAZON_SECRET_KEY
+        sync: false
+      - key: AMAZON_PARTNER_TAG
+        sync: false
+      - key: AMAZON_HOST
+        value: webservices.amazon.in
+      - key: AMAZON_REGION
+        value: eu-west-1
+      - key: AMAZON_MARKETPLACE
+        value: www.amazon.in
+      - key: FLIPKART_AFFILIATE_ID
+        sync: false
+      - key: FLIPKART_AFFILIATE_TOKEN
+        sync: false
+      - key: ALLOWED_ORIGIN
+        value: "*"
